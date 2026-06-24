@@ -1,0 +1,538 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap');
+
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --accent: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scrollbar-width: none;         /* Firefox */
+  -ms-overflow-style: none;      /* IE/Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none;                 /* Chrome, Safari, Opera */
+}
+
+html, body, #root {
+  width: 100vw;
+  height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #050505;
+  font-family: 'Inter', sans-serif;
+  color: var(--foreground);
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 60px;
+  z-index: 100;
+  transition: opacity 1s ease-in-out;
+}
+
+.overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.banner {
+  background: #2a2a2a;
+  background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
+  padding: 20px 50px;
+  border-radius: 2px;
+  border: 1px solid #444;
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.8),
+    inset 0 0 15px rgba(255, 255, 255, 0.05);
+  text-align: center;
+  position: relative;
+  pointer-events: auto;
+  opacity: 0;
+  animation: stoneRise 1.2s cubic-bezier(0.16, 1, 0.3, 1) 1.5s forwards;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #c0c0c0, transparent);
+  opacity: 0.5;
+}
+
+.banner-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5em;
+  color: #c0c0c0;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.banner-text {
+  font-size: 18px;
+  color: #e0e0e0;
+  margin: 0;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  font-family: 'Times New Roman', serif;
+}
+
+.checkbox-frame {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.checkbox-frame.checked {
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+.checkmark-svg {
+  width: 18px;
+  height: 18px;
+}
+
+.checkmark-svg path {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: drawCheck 0.8s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+@keyframes drawCheck {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes stoneRise {
+  from {
+    transform: translateY(60px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+/* Scroll hint banner */
+.scroll-banner {
+  animation-delay: 0s !important;
+}
+
+.scroll-icon {
+  flex-shrink: 0;
+}
+
+.scroll-line {
+  animation: scrollBounce 1.5s ease-in-out infinite;
+}
+
+.scroll-arrow {
+  animation: arrowBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes scrollBounce {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(4px); opacity: 0.4; }
+}
+
+@keyframes arrowBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(3px); opacity: 1; }
+}
+
+/* ============================================
+   Exit Room Button — Premium Glassmorphism
+   ============================================ */
+.exit-room-overlay {
+  position: fixed;
+  top: 32px;
+  left: 32px;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-20px) scale(0.95);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exit-room-overlay.visible {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  pointer-events: auto;
+}
+
+.exit-room-btn {
+  position: relative;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 50px;
+  outline: none;
+}
+
+.exit-btn-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05), rgba(255,255,255,0.15));
+  z-index: 0;
+  opacity: 0.7;
+  transition: opacity 0.4s ease;
+}
+
+.exit-room-btn:hover .exit-btn-glow {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.08), rgba(255,255,255,0.3));
+}
+
+.exit-btn-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px 11px 16px;
+  background: rgba(18, 18, 22, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 50px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exit-room-btn:hover .exit-btn-content {
+  background: rgba(30, 30, 38, 0.85);
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.exit-room-btn:active .exit-btn-content {
+  transform: scale(0.97);
+}
+
+.exit-arrow {
+  flex-shrink: 0;
+  opacity: 0.8;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease;
+}
+
+.exit-room-btn:hover .exit-arrow {
+  transform: translateX(-3px);
+  opacity: 1;
+}
+
+.exit-text {
+  white-space: nowrap;
+}
+
+.exit-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  margin-left: 2px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  line-height: 1;
+  transition: all 0.3s ease;
+}
+
+.exit-room-btn:hover .exit-kbd {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* ============================================
+   Project Details Modal
+   ============================================ */
+.project-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 300;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.project-modal {
+  width: 90%;
+  max-width: 550px;
+  background: rgba(30, 30, 30, 0.85);
+  background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 30px;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(255, 255, 255, 0.03),
+    inset 0 0 15px rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+  transform: scale(0.9) translateY(20px);
+  opacity: 0;
+  animation: modalEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+.project-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+}
+
+.project-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.project-modal-close:hover {
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+.project-modal-header {
+  margin-bottom: 20px;
+}
+
+.project-role {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+}
+
+.project-title {
+  font-family: 'Times New Roman', serif;
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+}
+
+.project-modal-body {
+  margin-bottom: 30px;
+}
+
+.project-description {
+  font-family: 'Inter', sans-serif;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: #c0c0c0;
+  margin-bottom: 22px;
+  font-weight: 300;
+}
+
+.project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.project-tag {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.project-tag:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.project-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.project-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 2px;
+  color: #000000;
+  text-decoration: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.15);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.project-link-btn:hover {
+  background: transparent;
+  color: #ffffff;
+  box-shadow: 
+    0 8px 25px rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.project-link-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalEnter {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Floating 3D Tooltip for Computer Screen */
+.computer-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(18, 18, 22, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 10px rgba(255,255,255,0.05);
+  animation: tooltipFloat 2s ease-in-out infinite;
+}
+
+.tooltip-pulse {
+  width: 8px;
+  height: 8px;
+  background-color: #00ffcc;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.7);
+  animation: pulseGreen 1.5s infinite;
+}
+
+.tooltip-text {
+  font-family: 'Outfit', sans-serif;
+}
+
+@keyframes tooltipFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulseGreen {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(0, 255, 204, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 255, 204, 0);
+  }
+}
+
