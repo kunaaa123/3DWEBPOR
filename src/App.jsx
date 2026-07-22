@@ -1,15 +1,36 @@
-import { Canvas } from '@react-three/fiber'
-import { Suspense, useState } from 'react'
-import { AdaptiveDpr, AdaptiveEvents, ScrollControls } from '@react-three/drei'
+import { Canvas, useThree } from '@react-three/fiber'
+import { Suspense, useState, useEffect } from 'react'
+import { AdaptiveDpr, AdaptiveEvents, ScrollControls, Preload } from '@react-three/drei'
 import Experience from './components/Experience'
 import Loader from './components/Loader'
 import Overlay from './components/Overlay'
+
+function ShaderWarmup() {
+  const { gl, scene, camera } = useThree()
+  useEffect(() => {
+    scene.traverse((child) => {
+      if (child.isMesh && child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => {
+            if (m.map) gl.initTexture(m.map)
+          })
+        } else {
+          if (child.material.map) gl.initTexture(child.material.map)
+        }
+      }
+    })
+    gl.compile(scene, camera)
+  }, [gl, scene, camera])
+  return null
+}
 
 function App() {
   const [hasClicked, setHasClicked] = useState(false)
   const [ready, setReady] = useState(false)
   const [focusedDoor, setFocusedDoor] = useState(null)
   const [selectedPaper, setSelectedPaper] = useState(null)
+  const [cameraArrived, setCameraArrived] = useState(false)
+  const [hoveredPaper, setHoveredPaper] = useState(null)
 
   return (
     <>
@@ -26,9 +47,11 @@ function App() {
           dpr={[1, 1.5]}
           performance={{ min: 0.5 }}
         >
-          <color attach="background" args={['#050505']} />
+          <color attach="background" args={['#faf7f2']} />
           <AdaptiveDpr pixelated />
           <AdaptiveEvents />
+          <Preload all />
+          <ShaderWarmup />
           <ScrollControls pages={6} damping={0}>
             <Experience
               onDoorClick={() => setHasClicked(true)}
@@ -38,11 +61,14 @@ function App() {
               setFocusedDoor={setFocusedDoor}
               selectedPaper={selectedPaper}
               setSelectedPaper={setSelectedPaper}
+              cameraArrived={cameraArrived}
+              setCameraArrived={setCameraArrived}
+              setHoveredPaper={setHoveredPaper}
             />
           </ScrollControls>
         </Canvas>
       </Suspense>
-      {!ready && <Loader />}
+      {!ready && <Loader onFinished={() => setReady(true)} />}
       {ready && (
         <Overlay
           hasClicked={hasClicked}
@@ -50,6 +76,8 @@ function App() {
           setFocusedDoor={setFocusedDoor}
           selectedPaper={selectedPaper}
           setSelectedPaper={setSelectedPaper}
+          cameraArrived={cameraArrived}
+          hoveredPaper={hoveredPaper}
         />
       )}
     </>

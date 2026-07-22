@@ -1,45 +1,80 @@
 import { useProgress } from '@react-three/drei'
 import { useState, useEffect } from 'react'
 
-const Loader = () => {
-  const { progress } = useProgress()
-  const [dots, setDots] = useState('')
+const Loader = ({ onFinished }) => {
+  const { active, progress, loaded, total } = useProgress()
   const [smoothedProgress, setSmoothedProgress] = useState(0)
+  const [loadingText, setLoadingText] = useState('กำลังเปิดอ่านบันทึก...')
 
+  // Smoothly increment progress number-by-number without jumping (Fast & Snappy)
   useEffect(() => {
-    const interval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '' : prev + '.')
-    }, 400)
-    return () => clearInterval(interval)
-  }, [])
-
-  // Smoothly increment progress
-  useEffect(() => {
+    let animationFrameId
     const updateProgress = () => {
       setSmoothedProgress(prev => {
-        if (prev < progress) {
-          // Slowly climb to the actual progress
-          const diff = progress - prev
-          const step = Math.max(0.1, diff * 0.1) // Adjust 0.1 for speed (lower = slower)
-          return Math.min(progress, prev + step)
+        if (prev >= 100) return 100
+
+        // Target progress from Drei or 100 if completed
+        let target = Math.min(100, Math.max(progress, prev))
+        if (!active && loaded > 0 && loaded >= total) {
+          target = 100
         }
+
+        if (prev < target) {
+          const diff = target - prev
+          // Accelerated step speed (1.8 - 3.5% per frame) for super fast loading!
+          const maxStep = target >= 100 ? 3.5 : (diff > 40 ? 2.5 : 1.8)
+          const step = Math.min(maxStep, Math.max(0.8, diff * 0.2))
+          const next = prev + step
+          return next >= 99.4 ? 100 : next
+        }
+
         return prev
       })
+      animationFrameId = requestAnimationFrame(updateProgress)
     }
 
-    const timer = requestAnimationFrame(updateProgress)
-    return () => cancelAnimationFrame(timer)
-  }, [progress, smoothedProgress])
+    animationFrameId = requestAnimationFrame(updateProgress)
+    return () => cancelAnimationFrame(animationFrameId)
+  }, [progress, active, loaded, total])
+
+  // Trigger onFinished instantly when smoothedProgress reaches 100% (100ms quick transition)
+  useEffect(() => {
+    if (smoothedProgress >= 100) {
+      const timer = setTimeout(() => {
+        if (onFinished) onFinished()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [smoothedProgress, onFinished])
 
   const pct = Math.round(smoothedProgress)
-  const isFinished = smoothedProgress >= 100 && progress >= 100
+
+  // Cycle through warm book-themed messages as progress increases
+  useEffect(() => {
+    if (pct < 25) {
+      setLoadingText('กำลังหยิบสมุดบันทึก...')
+    } else if (pct < 50) {
+      setLoadingText('กำลังเปิดหน้ากระดาษ...')
+    } else if (pct < 75) {
+      setLoadingText('กำลังจัดเตรียมภาพวาด 3 มิติ...')
+    } else if (pct < 95) {
+      setLoadingText('กำลังปรับแสงสว่างบนโต๊ะเขียนแบบ...')
+    } else {
+      setLoadingText('จัดเตรียมหน้าหนังสือเรียบร้อย...')
+    }
+  }, [pct])
 
   return (
     <div style={{
       position: 'fixed',
       top: 0, left: 0,
       width: '100%', height: '100%',
-      background: '#050505',
+      // Notebook ruled paper background using gradients
+      background: `
+        linear-gradient(90deg, transparent 79px, rgba(112, 92, 72, 0.12) 79px, rgba(112, 92, 72, 0.12) 81px, transparent 81px),
+        linear-gradient(rgba(112, 92, 72, 0.05) 1px, transparent 1px) 0 0 / 100% 24px,
+        #faf7f2
+      `,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -48,109 +83,165 @@ const Loader = () => {
       fontFamily: "'Outfit', sans-serif",
       overflow: 'hidden',
     }}>
-      {/* Ambient glow background */}
-      <div style={{
-        position: 'absolute',
-        width: '600px', height: '600px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)',
-        filter: 'blur(60px)',
-        pointerEvents: 'none',
-      }} />
+      {/* Book CSS Animation Styles */}
+      <style>{`
+        .book-container {
+          width: 70px;
+          height: 48px;
+          position: relative;
+          margin-bottom: 35px;
+          perspective: 200px;
+        }
+        .book-spine {
+          position: absolute;
+          left: 50%;
+          top: 0;
+          width: 2px;
+          height: 100%;
+          background: #705c48;
+          transform: translateX(-50%);
+          z-index: 10;
+          opacity: 0.8;
+        }
+        .book-page-left, .book-page-right {
+          position: absolute;
+          width: 50%;
+          height: 100%;
+          top: 0;
+          background: #fcfaf7;
+          border: 1px solid rgba(112, 92, 72, 0.2);
+          box-shadow: 0 4px 8px rgba(43, 39, 35, 0.05);
+        }
+        .book-page-left {
+          left: 0;
+          border-radius: 4px 0 0 4px;
+          border-right: none;
+        }
+        .book-page-right {
+          right: 0;
+          border-radius: 0 4px 4px 0;
+          border-left: none;
+        }
+        .book-page-flip {
+          position: absolute;
+          left: 50%;
+          top: 0;
+          width: 50%;
+          height: 100%;
+          background: #fcfaf7;
+          border: 1px solid rgba(112, 92, 72, 0.2);
+          border-left: none;
+          border-radius: 0 4px 4px 0;
+          transform-origin: left center;
+          animation: bookFlip 1.5s infinite ease-in-out;
+          z-index: 5;
+          box-shadow: 0 4px 8px rgba(43, 39, 35, 0.05);
+        }
+        @keyframes bookFlip {
+          0% {
+            transform: rotateY(0deg);
+            background: #fcfaf7;
+          }
+          50% {
+            background: #e8e3d9;
+          }
+          100% {
+            transform: rotateY(-180deg);
+            background: #fcfaf7;
+          }
+        }
+      `}</style>
+
+      {/* Book animation */}
+      <div className="book-container">
+        <div className="book-spine"></div>
+        <div className="book-page-left"></div>
+        <div className="book-page-flip"></div>
+        <div className="book-page-right"></div>
+      </div>
 
       {/* Logo / Title */}
       <div style={{
-        fontSize: '11px',
-        fontWeight: 700,
-        letterSpacing: '0.6em',
-        color: 'rgba(255,255,255,0.25)',
+        fontSize: '12px',
+        fontWeight: 600,
+        letterSpacing: '0.4em',
+        color: '#705c48',
         textTransform: 'uppercase',
-        marginBottom: '50px',
+        marginBottom: '20px',
+        fontFamily: "'Outfit', sans-serif",
+        opacity: 0.85
       }}>
-        Portfolio
+        JOURNAL
       </div>
 
       {/* Big percentage number */}
       <div style={{
         position: 'relative',
-        marginBottom: '40px',
+        marginBottom: '30px',
       }}>
         <span style={{
-          fontSize: '80px',
-          fontWeight: 300,
+          fontSize: '90px',
+          fontWeight: 400,
           letterSpacing: '-0.02em',
           lineHeight: 1,
-          fontFamily: "'Outfit', sans-serif",
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,1) ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
+          fontFamily: "'EB Garamond', serif",
+          color: '#2b2723',
         }}>
           {String(pct).padStart(3, '0')}
         </span>
         <span style={{
-          fontSize: '18px',
-          fontWeight: 300,
-          color: 'rgba(255,255,255,0.3)',
+          fontSize: '20px',
+          fontWeight: 400,
+          color: '#705c48',
           marginLeft: '4px',
+          fontFamily: "'EB Garamond', serif",
           verticalAlign: 'top',
-          lineHeight: '80px',
+          lineHeight: '90px',
         }}>%</span>
       </div>
 
       {/* Progress bar container */}
       <div style={{
-        width: '280px',
+        width: '240px',
         position: 'relative',
-        marginBottom: '30px',
+        marginBottom: '25px',
       }}>
         {/* Track */}
         <div style={{
           width: '100%',
-          height: '1px',
-          background: 'rgba(255,255,255,0.08)',
+          height: '2px',
+          background: 'rgba(112, 92, 72, 0.15)',
           position: 'relative',
           overflow: 'hidden',
+          borderRadius: '2px',
         }}>
           {/* Fill */}
           <div style={{
-            width: `${progress}%`,
+            width: `${pct}%`,
             height: '100%',
-            background: 'linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.8))',
-            transition: 'width 0.3s ease-out',
+            background: '#705c48',
+            transition: 'width 0.1s linear',
             position: 'relative',
-          }}>
-            {/* Glow dot at end */}
-            <div style={{
-              position: 'absolute',
-              right: '-3px',
-              top: '-3px',
-              width: '7px',
-              height: '7px',
-              borderRadius: '50%',
-              background: '#fff',
-              boxShadow: '0 0 12px rgba(255,255,255,0.6), 0 0 30px rgba(255,255,255,0.3)',
-            }} />
-          </div>
+            borderRadius: '2px',
+          }} />
         </div>
 
-        {/* Tick marks */}
+        {/* Minimal Tick marks */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          marginTop: '8px',
+          marginTop: '6px',
         }}>
-          {[0, 25, 50, 75, 100].map(tick => (
+          {[0, 50, 100].map(tick => (
             <div key={tick} style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '4px',
             }}>
               <div style={{
                 width: '1px',
-                height: tick % 50 === 0 ? '6px' : '4px',
-                background: pct >= tick ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)',
+                height: '4px',
+                background: pct >= tick ? '#705c48' : 'rgba(112, 92, 72, 0.25)',
                 transition: 'background 0.3s ease',
               }} />
             </div>
@@ -160,40 +251,26 @@ const Loader = () => {
 
       {/* Status text */}
       <div style={{
-        fontSize: '10px',
-        fontWeight: 400,
-        letterSpacing: '0.35em',
-        color: 'rgba(255,255,255,0.3)',
-        textTransform: 'uppercase',
+        fontSize: '11px',
+        fontWeight: 500,
+        letterSpacing: '0.15em',
+        color: '#705c48',
+        fontFamily: "'Outfit', sans-serif",
+        textAlign: 'center',
+        opacity: 0.9,
       }}>
-        {pct < 100 ? `Loading assets${dots}` : 'Initializing'}
+        {loadingText}
       </div>
 
-      {/* Decorative corner lines */}
-      <svg style={{ position: 'absolute', top: '30px', left: '30px', opacity: 0.1 }} width="40" height="40">
-        <line x1="0" y1="0" x2="40" y2="0" stroke="white" strokeWidth="1" />
-        <line x1="0" y1="0" x2="0" y2="40" stroke="white" strokeWidth="1" />
-      </svg>
-      <svg style={{ position: 'absolute', top: '30px', right: '30px', opacity: 0.1 }} width="40" height="40">
-        <line x1="0" y1="0" x2="40" y2="0" stroke="white" strokeWidth="1" />
-        <line x1="40" y1="0" x2="40" y2="40" stroke="white" strokeWidth="1" />
-      </svg>
-      <svg style={{ position: 'absolute', bottom: '30px', left: '30px', opacity: 0.1 }} width="40" height="40">
-        <line x1="0" y1="40" x2="40" y2="40" stroke="white" strokeWidth="1" />
-        <line x1="0" y1="0" x2="0" y2="40" stroke="white" strokeWidth="1" />
-      </svg>
-      <svg style={{ position: 'absolute', bottom: '30px', right: '30px', opacity: 0.1 }} width="40" height="40">
-        <line x1="0" y1="40" x2="40" y2="40" stroke="white" strokeWidth="1" />
-        <line x1="40" y1="0" x2="40" y2="40" stroke="white" strokeWidth="1" />
-      </svg>
-
-      {/* Scan line animation */}
+      {/* Decorative notebook edges */}
       <div style={{
         position: 'absolute',
-        top: 0, left: 0,
-        width: '100%', height: '100%',
-        background: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.008) 3px, rgba(255,255,255,0.008) 4px)',
-        pointerEvents: 'none',
+        top: 0,
+        left: 0,
+        width: '15px',
+        height: '100%',
+        background: 'linear-gradient(90deg, rgba(0,0,0,0.03) 0%, transparent 100%)',
+        borderRight: '1px dashed rgba(112, 92, 72, 0.15)',
       }} />
     </div>
   )

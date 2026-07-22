@@ -46,8 +46,8 @@ const getRoomDiveParameters = (door) => {
     };
   } else if (isThirdRoom) {
     return {
-      endX: -15.0, // Pulled back even more (shallower dive) for the 3rd room
-      lookX: -31.0 // Adjusted look target
+      endX: -22.0, // Move camera in further to center the wall of screens
+      lookX: -46.0 // Look directly at the computer screen wall (at X = -47)
     };
   } else if (isProjectRoom) {
     return {
@@ -64,7 +64,7 @@ const getRoomDiveParameters = (door) => {
   }
 };
 
-const Experience = ({ onDoorClick, onReady, hasClicked, focusedDoor, setFocusedDoor, selectedPaper, setSelectedPaper }) => {
+const Experience = ({ onDoorClick, onReady, hasClicked, focusedDoor, setFocusedDoor, selectedPaper, setSelectedPaper, cameraArrived, setCameraArrived, setHoveredPaper }) => {
   const scroll = useScroll()
   const cameraRef = useRef()
   const [targetPos, setTargetPos] = useState(null)
@@ -89,10 +89,11 @@ const Experience = ({ onDoorClick, onReady, hasClicked, focusedDoor, setFocusedD
   // Ref tracking focused side door to prevent frame lag during click transitions
   const focusedDoorRef = useRef(null)
   const entranceInitializedRef = useRef(false)
-  const [cameraArrived, setCameraArrived] = useState(false)
   const doorOpenProgressRef = useRef(0)
   const diveProgressRef = useRef(0)
   const cameraArrivedAtDoorRef = useRef(false)
+
+
 
   // === EXIT ANIMATION STATE ===
   // Instead of immediately clearing focusedDoor, we track the exit in phases:
@@ -136,9 +137,8 @@ const Experience = ({ onDoorClick, onReady, hasClicked, focusedDoor, setFocusedD
       }
     }
 
-    // Tell the app we are ready!
-    if (onReady) onReady()
-  }, [onReady])
+    // Position entrance initialized
+  }, [])
 
   // Sync React prop focusedDoor with mutable Ref + detect exit transitions
   const prevFocusedDoorRef = useRef(null)
@@ -362,6 +362,8 @@ const Experience = ({ onDoorClick, onReady, hasClicked, focusedDoor, setFocusedD
           scrollOffset = 0
         }
 
+
+
         const scrollDepth = scrollOffset * -400
         const camZEstimate = _entryPos.z + scrollDepth
 
@@ -389,12 +391,13 @@ const Experience = ({ onDoorClick, onReady, hasClicked, focusedDoor, setFocusedD
       }
     }
 
-    // Smooth camera movement — use slower lerp during entry for cinematic feel
-    const lerpSpeed = entryCompleteRef.current ? 0.05 : 0.08
-    cameraRef.current.position.lerp(_targetP, lerpSpeed)
+    // Frame-rate independent smooth camera movement (Silky smooth 60 FPS)
+    const lerpExpSpeed = entryCompleteRef.current ? 5.0 : 7.0
+    const lerpAlpha = 1 - Math.exp(-lerpExpSpeed * delta)
+    cameraRef.current.position.lerp(_targetP, lerpAlpha)
 
     // Smoothly lerp the lookAt target
-    currentTargetLookAt.lerp(_targetL, lerpSpeed)
+    currentTargetLookAt.lerp(_targetL, lerpAlpha)
 
     // Apply mouse parallax offset to lookAt (subtle head movement, only inside corridor)
     if (hasClicked && !focusedDoorRef.current) {
@@ -449,14 +452,15 @@ const Experience = ({ onDoorClick, onReady, hasClicked, focusedDoor, setFocusedD
       />
 
       {/* Atmospheric fog — visible inside corridor and beyond */}
-      <fog attach="fog" args={['#ffffff', 20, 180]} />
-      <color attach="background" args={['#ffffff']} />
+      <fog attach="fog" args={['#faf7f2', 20, 180]} />
+      <color attach="background" args={['#faf7f2']} />
 
-      <ambientLight intensity={0.4} />
+      <ambientLight intensity={0.7} color="#fffaee" />
       <Environment preset="city" />
       <directionalLight
         position={[10, 10, 5]}
-        intensity={0.8}
+        intensity={1.2}
+        color="#fffaeb"
       />
 
       <Corridor
@@ -475,6 +479,7 @@ const Experience = ({ onDoorClick, onReady, hasClicked, focusedDoor, setFocusedD
         exitPhaseRef={exitPhaseRef}
         onPaperClick={setSelectedPaper}
         selectedPaper={selectedPaper}
+        setHoveredPaper={setHoveredPaper}
       />
     </>
   )
