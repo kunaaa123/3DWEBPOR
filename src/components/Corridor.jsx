@@ -561,7 +561,8 @@ const fetchPartWithProgress = async (url, isPart1) => {
     received += value.length
     if (isPart1) part1Bytes = received
     else part2Bytes = received
-    const pct = Math.min(100, Math.round(((part1Bytes + part2Bytes) / TOTAL_MODEL_BYTES) * 100))
+    // Map byte download progress to 0% -> 85%
+    const pct = Math.min(85, Math.round(((part1Bytes + part2Bytes) / TOTAL_MODEL_BYTES) * 85))
     window.dispatchEvent(new CustomEvent('model-download-progress', { detail: pct }))
   }
 
@@ -581,7 +582,7 @@ export const getCorridorBlobUrl = () => {
       fetchPartWithProgress('/models/corridor.part2', false)
     ]).then(([b1, b2]) => {
       const blob = new Blob([b1, b2], { type: 'model/gltf-binary' })
-      window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 100 }))
+      window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 85 }))
       return URL.createObjectURL(blob)
     })
   }
@@ -611,6 +612,10 @@ const CorridorInner = ({ modelUrl, onEntranceFound, onDoorClick, onCharacterFoun
   const elasticsearchTexture = useTexture('/models/elasticsearch.jpg')
   const sendgridTexture = useTexture('/models/sendgrid_webhook.jpg')
   const portfolio3DTexture = useTexture('/models/portfolio_3d.png')
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 92 }))
+  }, [])
   useMemo(() => {
     screenTexture.flipY = false
     screenTexture.colorSpace = THREE.SRGBColorSpace

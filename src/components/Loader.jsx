@@ -24,16 +24,18 @@ const Loader = ({ modelReady, onFinished }) => {
         // Target progress combines streaming model download progress and Drei texture progress
         let target = Math.max(progress, modelProgress)
 
-        // Set target to 100% when model download completes or Drei finishes
-        if (modelProgress >= 100 || progress >= 100 || (!active && loaded > 0)) {
+        // Target reaches 100% ONLY when modelProgress is 100 AND modelReady (GPU shaders + camera positioned) is true
+        if (modelProgress >= 100 && modelReady) {
           target = 100
+        } else if (target >= 99 && !modelReady) {
+          target = 99
         }
 
         if (prev < target) {
           const diff = target - prev
-          const step = Math.min(4.0, Math.max(0.5, diff * 0.25))
+          const step = Math.min(3.0, Math.max(0.4, diff * 0.2))
           const next = prev + step
-          return next >= 99.5 ? 100 : next
+          return next >= 99.5 ? (target >= 100 ? 100 : 99) : next
         }
 
         return prev
@@ -45,15 +47,15 @@ const Loader = ({ modelReady, onFinished }) => {
     return () => cancelAnimationFrame(animationFrameId)
   }, [progress, active, loaded, total, modelProgress, modelReady])
 
-  // Trigger onFinished when smoothedProgress reaches 100%
+  // Trigger onFinished when smoothedProgress reaches 100% AND 3D scene is 100% ready
   useEffect(() => {
-    if (smoothedProgress >= 100) {
+    if (smoothedProgress >= 100 && modelReady) {
       const timer = setTimeout(() => {
         if (onFinished) onFinished()
-      }, 150)
+      }, 200)
       return () => clearTimeout(timer)
     }
-  }, [smoothedProgress, onFinished])
+  }, [smoothedProgress, modelReady, onFinished])
 
   const pct = Math.round(smoothedProgress)
 
@@ -61,12 +63,14 @@ const Loader = ({ modelReady, onFinished }) => {
   useEffect(() => {
     if (pct < 25) {
       setLoadingText('กำลังหยิบสมุดบันทึก...')
-    } else if (pct < 50) {
-      setLoadingText('กำลังเปิดหน้ากระดาษ...')
-    } else if (pct < 75) {
-      setLoadingText('กำลังจัดเตรียมภาพวาด 3 มิติ...')
+    } else if (pct < 60) {
+      setLoadingText('กำลังดาวน์โหลดข้อมูล 3 มิติ (121 MB)...')
+    } else if (pct < 85) {
+      setLoadingText('กำลังประกอบโครงสร้างและห้องโถง...')
     } else if (pct < 95) {
-      setLoadingText('กำลังปรับแสงสว่างบนโต๊ะเขียนแบบ...')
+      setLoadingText('กำลังปิดผิวสัมผัสกระดาษและภาพถ่าย...')
+    } else if (pct < 100) {
+      setLoadingText('กำลังเตรียม GPU และปรับแสงสว่าง...')
     } else {
       setLoadingText('จัดเตรียมหน้าหนังสือเรียบร้อย...')
     }
