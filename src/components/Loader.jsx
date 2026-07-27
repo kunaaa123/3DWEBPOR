@@ -24,18 +24,16 @@ const Loader = ({ modelReady, onFinished }) => {
         // Target progress combines streaming model download progress and Drei texture progress
         let target = Math.max(progress, modelProgress)
 
-        // Target reaches 100% ONLY when modelProgress is 100 AND modelReady (GPU shaders + camera positioned) is true
-        if (modelProgress >= 100 && modelReady) {
+        // Set target to 100% when modelProgress reaches 100 (emitted after shader compilation)
+        if (modelProgress >= 100 || progress >= 100) {
           target = 100
-        } else if (target >= 99 && !modelReady) {
-          target = 99
         }
 
         if (prev < target) {
           const diff = target - prev
-          const step = Math.min(3.0, Math.max(0.4, diff * 0.2))
+          const step = Math.min(4.0, Math.max(0.5, diff * 0.25))
           const next = prev + step
-          return next >= 99.5 ? (target >= 100 ? 100 : 99) : next
+          return next >= 99.5 ? 100 : next
         }
 
         return prev
@@ -45,17 +43,17 @@ const Loader = ({ modelReady, onFinished }) => {
 
     animationFrameId = requestAnimationFrame(updateProgress)
     return () => cancelAnimationFrame(animationFrameId)
-  }, [progress, active, loaded, total, modelProgress, modelReady])
+  }, [progress, active, loaded, total, modelProgress])
 
-  // Trigger onFinished when smoothedProgress reaches 100% AND 3D scene is 100% ready
+  // Trigger onFinished when smoothedProgress reaches 100%
   useEffect(() => {
-    if (smoothedProgress >= 100 && modelReady) {
+    if (smoothedProgress >= 100) {
       const timer = setTimeout(() => {
         if (onFinished) onFinished()
-      }, 200)
+      }, 150)
       return () => clearTimeout(timer)
     }
-  }, [smoothedProgress, modelReady, onFinished])
+  }, [smoothedProgress, onFinished])
 
   const pct = Math.round(smoothedProgress)
 
