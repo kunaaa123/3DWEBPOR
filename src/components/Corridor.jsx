@@ -545,7 +545,8 @@ const SCROLL_ANIM_SPEED = 8
 let corridorBlobPromise = null
 
 const TOTAL_MODEL_BYTES = 91711632
-const CACHE_NAME = 'corridor-model-v2'
+const CACHE_NAME = 'corridor-model-v87mb'
+const MODEL_URL = '/models/corridor.glb?v=87mb'
 
 const fetchSingleModelWithProgress = async (url) => {
   // Try browser cache first for instant reload
@@ -596,7 +597,7 @@ const fetchSingleModelWithProgress = async (url) => {
 
 export const getCorridorBlobUrl = () => {
   if (!corridorBlobPromise) {
-    corridorBlobPromise = fetchSingleModelWithProgress('/models/corridor.glb').then((buffer) => {
+    corridorBlobPromise = fetchSingleModelWithProgress(MODEL_URL).then((buffer) => {
       const blob = new Blob([buffer], { type: 'model/gltf-binary' })
       window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 85 }))
       return URL.createObjectURL(blob)
