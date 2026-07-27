@@ -1,7 +1,7 @@
 import { useProgress } from '@react-three/drei'
 import { useState, useEffect } from 'react'
 
-const Loader = ({ onFinished }) => {
+const Loader = ({ modelReady, onFinished }) => {
   const { active, progress, loaded, total } = useProgress()
   const [modelProgress, setModelProgress] = useState(0)
   const [smoothedProgress, setSmoothedProgress] = useState(0)
@@ -24,9 +24,11 @@ const Loader = ({ onFinished }) => {
         // Target progress combines streaming model download progress and Drei texture progress
         let target = Math.max(progress, modelProgress)
 
-        // Only mark target as 100 when the 121MB model is 100% downloaded AND Drei texture loading is complete
-        if (modelProgress >= 100 && (progress >= 100 || (!active && loaded >= 5))) {
+        // Only mark target as 100 when the 121MB model is 100% downloaded AND 3D scene is ready
+        if (modelProgress >= 100 && modelReady && (progress >= 100 || (!active && loaded >= 5))) {
           target = 100
+        } else if (target >= 99 && !modelReady) {
+          target = 99
         }
 
         if (prev < target) {
@@ -43,17 +45,17 @@ const Loader = ({ onFinished }) => {
 
     animationFrameId = requestAnimationFrame(updateProgress)
     return () => cancelAnimationFrame(animationFrameId)
-  }, [progress, active, loaded, total, modelProgress])
+  }, [progress, active, loaded, total, modelProgress, modelReady])
 
-  // Trigger onFinished when smoothedProgress reaches 100%
+  // Trigger onFinished when smoothedProgress reaches 100% AND 3D model is fully ready
   useEffect(() => {
-    if (smoothedProgress >= 100) {
+    if (smoothedProgress >= 100 && modelReady) {
       const timer = setTimeout(() => {
         if (onFinished) onFinished()
       }, 200)
       return () => clearTimeout(timer)
     }
-  }, [smoothedProgress, onFinished])
+  }, [smoothedProgress, modelReady, onFinished])
 
   const pct = Math.round(smoothedProgress)
 
