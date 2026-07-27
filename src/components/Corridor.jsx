@@ -543,34 +543,26 @@ const EXIT_DOOR_TRIGGER_RADIUS = 40
 const SCROLL_ANIM_SPEED = 8
 
 let corridorBlobPromise = null
-const PART_URLS = ['/models/corridor.p1', '/models/corridor.p2', '/models/corridor.p3', '/models/corridor.p4']
-const TOTAL_MODEL_BYTES = 121190284
-const CACHE_NAME = 'corridor-model-v1'
-const partBytesLoaded = [0, 0, 0, 0]
 
-const emitProgress = () => {
-  const total = partBytesLoaded[0] + partBytesLoaded[1] + partBytesLoaded[2] + partBytesLoaded[3]
-  // Map byte download progress to 0% -> 85%
-  const pct = Math.min(85, Math.round((total / TOTAL_MODEL_BYTES) * 85))
-  window.dispatchEvent(new CustomEvent('model-download-progress', { detail: pct }))
-}
+const TOTAL_MODEL_BYTES = 91711632
+const CACHE_NAME = 'corridor-model-v2'
 
-const fetchPartWithProgress = async (url, partIndex) => {
+const fetchSingleModelWithProgress = async (url) => {
   // Try browser cache first for instant reload
   try {
     const cache = await caches.open(CACHE_NAME)
     const cached = await cache.match(url)
     if (cached) {
       const buffer = await cached.arrayBuffer()
-      partBytesLoaded[partIndex] = buffer.byteLength
-      emitProgress()
+      window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 85 }))
       return buffer
     }
   } catch (e) { /* cache API not available, proceed with network */ }
 
-  // Fetch from network with streaming progress
   const response = await fetch(url)
   if (!response.ok) throw new Error(`Failed to load ${url}`)
+  const contentLength = response.headers.get('content-length')
+  const total = contentLength ? parseInt(contentLength, 10) : TOTAL_MODEL_BYTES
   const reader = response.body.getReader()
   const chunks = []
   let received = 0
@@ -580,8 +572,8 @@ const fetchPartWithProgress = async (url, partIndex) => {
     if (done) break
     chunks.push(value)
     received += value.length
-    partBytesLoaded[partIndex] = received
-    emitProgress()
+    const pct = Math.min(85, Math.round((received / total) * 85))
+    window.dispatchEvent(new CustomEvent('model-download-progress', { detail: pct }))
   }
 
   const result = new Uint8Array(received)
@@ -595,7 +587,7 @@ const fetchPartWithProgress = async (url, partIndex) => {
   try {
     const cache = await caches.open(CACHE_NAME)
     await cache.put(url, new Response(new Blob([result.buffer]), {
-      headers: { 'Content-Type': 'application/octet-stream' }
+      headers: { 'Content-Type': 'model/gltf-binary' }
     }))
   } catch (e) { /* cache write failed, not critical */ }
 
@@ -604,10 +596,8 @@ const fetchPartWithProgress = async (url, partIndex) => {
 
 export const getCorridorBlobUrl = () => {
   if (!corridorBlobPromise) {
-    corridorBlobPromise = Promise.all(
-      PART_URLS.map((url, i) => fetchPartWithProgress(url, i))
-    ).then((buffers) => {
-      const blob = new Blob(buffers, { type: 'model/gltf-binary' })
+    corridorBlobPromise = fetchSingleModelWithProgress('/models/corridor.glb').then((buffer) => {
+      const blob = new Blob([buffer], { type: 'model/gltf-binary' })
       window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 85 }))
       return URL.createObjectURL(blob)
     })
@@ -615,7 +605,7 @@ export const getCorridorBlobUrl = () => {
   return corridorBlobPromise
 }
 
-// Pre-trigger parallel downloading of split model parts immediately
+// Pre-trigger single model downloading immediately
 getCorridorBlobUrl()
 
 const Corridor = (props) => {
