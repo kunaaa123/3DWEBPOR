@@ -543,7 +543,7 @@ const EXIT_DOOR_TRIGGER_RADIUS = 40
 const SCROLL_ANIM_SPEED = 8
 
 const Corridor = ({ onEntranceFound, onDoorClick, onCharacterFound, hasClicked, cameraZRef, onExitDoorFound, onRoomDoorsFound, onRoomDoorClick, cameraArrived, focusedDoor, doorOpenProgressRef, exitingDoorRef, exitPhaseRef, onPaperClick, selectedPaper, setHoveredPaper }) => {
-  const { scene, animations } = useGLTF('https://files.catbox.moe/9w7qzf.glb')
+  const { scene, animations } = useGLTF('/models/corridor.glb')
   const screenTexture = useTexture('/models/computer_screen.jpg')
   const sukuTexture = useTexture('/models/donate_suku.jpg')
   const todolistTexture = useTexture('/models/todolist.png')
@@ -1408,7 +1408,7 @@ const Corridor = ({ onEntranceFound, onDoorClick, onCharacterFound, hasClicked, 
   )
 }
 
-useGLTF.preload('https://files.catbox.moe/9w7qzf.glb')
+useGLTF.preload('/models/corridor.glb')
 useTexture.preload('/models/computer_screen.jpg')
 useTexture.preload('/models/donate_suku.jpg')
 useTexture.preload('/models/todolist.png')
