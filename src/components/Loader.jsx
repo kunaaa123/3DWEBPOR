@@ -24,18 +24,16 @@ const Loader = ({ modelReady, onFinished }) => {
         // Target progress combines streaming model download progress and Drei texture progress
         let target = Math.max(progress, modelProgress)
 
-        // Only mark target as 100 when the 121MB model is 100% downloaded AND 3D scene is ready
-        if (modelProgress >= 100 && modelReady && (progress >= 100 || (!active && loaded >= 5))) {
+        // Set target to 100% when model download completes or Drei finishes
+        if (modelProgress >= 100 || progress >= 100 || (!active && loaded > 0)) {
           target = 100
-        } else if (target >= 99 && !modelReady) {
-          target = 99
         }
 
         if (prev < target) {
           const diff = target - prev
-          const step = Math.min(3.0, Math.max(0.4, diff * 0.2))
+          const step = Math.min(4.0, Math.max(0.5, diff * 0.25))
           const next = prev + step
-          return next >= 99.5 ? (target >= 100 ? 100 : 99) : next
+          return next >= 99.5 ? 100 : next
         }
 
         return prev
