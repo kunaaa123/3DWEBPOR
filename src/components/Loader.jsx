@@ -45,15 +45,15 @@ const Loader = ({ modelReady, onFinished }) => {
     return () => cancelAnimationFrame(animationFrameId)
   }, [progress, active, loaded, total, modelProgress, modelReady])
 
-  // Trigger onFinished when smoothedProgress reaches 100% AND 3D model is fully ready
+  // Trigger onFinished when smoothedProgress reaches 100%
   useEffect(() => {
-    if (smoothedProgress >= 100 && modelReady) {
+    if (smoothedProgress >= 100) {
       const timer = setTimeout(() => {
         if (onFinished) onFinished()
-      }, 200)
+      }, 150)
       return () => clearTimeout(timer)
     }
-  }, [smoothedProgress, modelReady, onFinished])
+  }, [smoothedProgress, onFinished])
 
   const pct = Math.round(smoothedProgress)
 
