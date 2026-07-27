@@ -3,8 +3,16 @@ import { useState, useEffect } from 'react'
 
 const Loader = ({ onFinished }) => {
   const { active, progress, loaded, total } = useProgress()
+  const [modelProgress, setModelProgress] = useState(0)
   const [smoothedProgress, setSmoothedProgress] = useState(0)
   const [loadingText, setLoadingText] = useState('กำลังเปิดอ่านบันทึก...')
+
+  // Listen to real-time byte-by-byte streaming progress for the 121MB 3D model
+  useEffect(() => {
+    const handleProgress = (e) => setModelProgress(e.detail)
+    window.addEventListener('model-download-progress', handleProgress)
+    return () => window.removeEventListener('model-download-progress', handleProgress)
+  }, [])
 
   // Smoothly increment progress number-by-number without jumping
   useEffect(() => {
@@ -13,21 +21,17 @@ const Loader = ({ onFinished }) => {
       setSmoothedProgress(prev => {
         if (prev >= 100) return 100
 
-        // Target progress from Drei's loading manager (0 to 100)
-        let target = progress
+        // Target progress combines streaming model download progress and Drei texture progress
+        let target = Math.max(progress, modelProgress)
 
-        // Only mark target as 100 when Drei explicitly hits 100 OR all assets (>= 5 items) are fully loaded
-        if (progress >= 100 || (!active && loaded >= 5 && loaded >= total)) {
+        // Only mark target as 100 when the 121MB model is 100% downloaded AND Drei texture loading is complete
+        if (modelProgress >= 100 && (progress >= 100 || (!active && loaded >= 5))) {
           target = 100
-        } else if (!active && loaded < 5 && progress < 100) {
-          // At initial startup before full asset manifest is registered by Drei
-          target = Math.max(prev, progress)
         }
 
         if (prev < target) {
           const diff = target - prev
-          // Smooth steady increment matching real asset download speed (0.3 - 2.5% per frame)
-          const step = Math.min(2.5, Math.max(0.3, diff * 0.15))
+          const step = Math.min(3.0, Math.max(0.4, diff * 0.2))
           const next = prev + step
           return next >= 99.5 ? (target >= 100 ? 100 : 99) : next
         }
@@ -39,7 +43,7 @@ const Loader = ({ onFinished }) => {
 
     animationFrameId = requestAnimationFrame(updateProgress)
     return () => cancelAnimationFrame(animationFrameId)
-  }, [progress, active, loaded, total])
+  }, [progress, active, loaded, total, modelProgress])
 
   // Trigger onFinished when smoothedProgress reaches 100%
   useEffect(() => {

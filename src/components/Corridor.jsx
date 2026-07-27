@@ -543,19 +543,45 @@ const EXIT_DOOR_TRIGGER_RADIUS = 40
 const SCROLL_ANIM_SPEED = 8
 
 let corridorBlobPromise = null
+let part1Bytes = 0
+let part2Bytes = 0
+const TOTAL_MODEL_BYTES = 121190284
+
+const fetchPartWithProgress = async (url, isPart1) => {
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`Failed to load ${url}`)
+  const reader = response.body.getReader()
+  const chunks = []
+  let received = 0
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
+    received += value.length
+    if (isPart1) part1Bytes = received
+    else part2Bytes = received
+    const pct = Math.min(100, Math.round(((part1Bytes + part2Bytes) / TOTAL_MODEL_BYTES) * 100))
+    window.dispatchEvent(new CustomEvent('model-download-progress', { detail: pct }))
+  }
+
+  const result = new Uint8Array(received)
+  let pos = 0
+  for (let chunk of chunks) {
+    result.set(chunk, pos)
+    pos += chunk.length
+  }
+  return result.buffer
+}
+
 export const getCorridorBlobUrl = () => {
   if (!corridorBlobPromise) {
     corridorBlobPromise = Promise.all([
-      fetch('/models/corridor.part1').then(r => {
-        if (!r.ok) throw new Error('Failed to load corridor.part1')
-        return r.arrayBuffer()
-      }),
-      fetch('/models/corridor.part2').then(r => {
-        if (!r.ok) throw new Error('Failed to load corridor.part2')
-        return r.arrayBuffer()
-      })
+      fetchPartWithProgress('/models/corridor.part1', true),
+      fetchPartWithProgress('/models/corridor.part2', false)
     ]).then(([b1, b2]) => {
       const blob = new Blob([b1, b2], { type: 'model/gltf-binary' })
+      window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 100 }))
       return URL.createObjectURL(blob)
     })
   }
