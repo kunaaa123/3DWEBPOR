@@ -542,8 +542,42 @@ const EXIT_DOOR_TRIGGER_RADIUS = 40
 // Lerp speed for scroll-triggered animations (lower = smoother/slower)
 const SCROLL_ANIM_SPEED = 8
 
-const Corridor = ({ onEntranceFound, onDoorClick, onCharacterFound, hasClicked, cameraZRef, onExitDoorFound, onRoomDoorsFound, onRoomDoorClick, cameraArrived, focusedDoor, doorOpenProgressRef, exitingDoorRef, exitPhaseRef, onPaperClick, selectedPaper, setHoveredPaper }) => {
-  const { scene, animations } = useGLTF('/models/corridor.glb')
+let corridorBlobPromise = null
+export const getCorridorBlobUrl = () => {
+  if (!corridorBlobPromise) {
+    corridorBlobPromise = Promise.all([
+      fetch('/models/corridor.part1').then(r => {
+        if (!r.ok) throw new Error('Failed to load corridor.part1')
+        return r.arrayBuffer()
+      }),
+      fetch('/models/corridor.part2').then(r => {
+        if (!r.ok) throw new Error('Failed to load corridor.part2')
+        return r.arrayBuffer()
+      })
+    ]).then(([b1, b2]) => {
+      const blob = new Blob([b1, b2], { type: 'model/gltf-binary' })
+      return URL.createObjectURL(blob)
+    })
+  }
+  return corridorBlobPromise
+}
+
+// Pre-trigger parallel downloading of split model parts immediately
+getCorridorBlobUrl()
+
+const Corridor = (props) => {
+  const [modelUrl, setModelUrl] = useState(null)
+
+  useEffect(() => {
+    getCorridorBlobUrl().then(url => setModelUrl(url))
+  }, [])
+
+  if (!modelUrl) return null
+  return <CorridorInner modelUrl={modelUrl} {...props} />
+}
+
+const CorridorInner = ({ modelUrl, onEntranceFound, onDoorClick, onCharacterFound, hasClicked, cameraZRef, onExitDoorFound, onRoomDoorsFound, onRoomDoorClick, cameraArrived, focusedDoor, doorOpenProgressRef, exitingDoorRef, exitPhaseRef, onPaperClick, selectedPaper, setHoveredPaper }) => {
+  const { scene, animations } = useGLTF(modelUrl)
   const screenTexture = useTexture('/models/computer_screen.jpg')
   const sukuTexture = useTexture('/models/donate_suku.jpg')
   const todolistTexture = useTexture('/models/todolist.png')
@@ -1408,7 +1442,6 @@ const Corridor = ({ onEntranceFound, onDoorClick, onCharacterFound, hasClicked, 
   )
 }
 
-useGLTF.preload('/models/corridor.glb')
 useTexture.preload('/models/computer_screen.jpg')
 useTexture.preload('/models/donate_suku.jpg')
 useTexture.preload('/models/todolist.png')
