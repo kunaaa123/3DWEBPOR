@@ -545,22 +545,25 @@ const SCROLL_ANIM_SPEED = 8
 let corridorBlobPromise = null
 
 const TOTAL_MODEL_BYTES = 91711632
-const CACHE_NAME = 'corridor-model-v87mb'
-const MODEL_URL = '/models/corridor.glb?v=87mb'
+const SPEED_TEST_ID = Date.now()
+const CACHE_NAME = 'corridor-model-speedtest-' + SPEED_TEST_ID
+const MODEL_URL = '/models/corridor.glb?speedTest=' + SPEED_TEST_ID
 
 const fetchSingleModelWithProgress = async (url) => {
-  // Try browser cache first for instant reload
+  // Clear any existing model caches first to ensure 100% fresh network download
   try {
-    const cache = await caches.open(CACHE_NAME)
-    const cached = await cache.match(url)
-    if (cached) {
-      const buffer = await cached.arrayBuffer()
-      window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 85 }))
-      return buffer
+    const keys = await caches.keys()
+    for (const key of keys) {
+      if (key.includes('corridor-model')) {
+        await caches.delete(key)
+      }
     }
-  } catch (e) { /* cache API not available, proceed with network */ }
+  } catch (e) { /* ignore */ }
 
-  const response = await fetch(url)
+  const startTime = performance.now()
+  console.log('⏱️ [Speed Test] Download started for 87.4MB model...')
+
+  const response = await fetch(url, { cache: 'no-store' })
   if (!response.ok) throw new Error(`Failed to load ${url}`)
   const contentLength = response.headers.get('content-length')
   const total = contentLength ? parseInt(contentLength, 10) : TOTAL_MODEL_BYTES
@@ -577,20 +580,15 @@ const fetchSingleModelWithProgress = async (url) => {
     window.dispatchEvent(new CustomEvent('model-download-progress', { detail: pct }))
   }
 
+  const durationSec = ((performance.now() - startTime) / 1000).toFixed(2)
+  console.log(`⏱️ [Speed Test] Model download completed in ${durationSec} seconds!`)
+
   const result = new Uint8Array(received)
   let pos = 0
   for (const chunk of chunks) {
     result.set(chunk, pos)
     pos += chunk.length
   }
-
-  // Store in browser cache for instant next visit
-  try {
-    const cache = await caches.open(CACHE_NAME)
-    await cache.put(url, new Response(new Blob([result.buffer]), {
-      headers: { 'Content-Type': 'model/gltf-binary' }
-    }))
-  } catch (e) { /* cache write failed, not critical */ }
 
   return result.buffer
 }
