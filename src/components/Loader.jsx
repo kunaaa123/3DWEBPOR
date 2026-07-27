@@ -1,8 +1,6 @@
-import { useProgress } from '@react-three/drei'
 import { useState, useEffect } from 'react'
 
-const Loader = ({ modelReady, onFinished }) => {
-  const { active, progress, loaded, total } = useProgress()
+const Loader = ({ onFinished }) => {
   const [modelProgress, setModelProgress] = useState(0)
   const [smoothedProgress, setSmoothedProgress] = useState(0)
   const [loadingText, setLoadingText] = useState('กำลังเปิดอ่านบันทึก...')
@@ -21,19 +19,14 @@ const Loader = ({ modelReady, onFinished }) => {
       setSmoothedProgress(prev => {
         if (prev >= 100) return 100
 
-        // Target progress combines streaming model download progress and Drei texture progress
-        let target = Math.max(progress, modelProgress)
-
-        // Set target to 100% when modelProgress reaches 100 (emitted after shader compilation)
-        if (modelProgress >= 100 || progress >= 100) {
-          target = 100
-        }
+        // ONLY use modelProgress (0->85 download, 92 mesh parsed, 100 GPU shaders done)
+        const target = modelProgress
 
         if (prev < target) {
           const diff = target - prev
-          const step = Math.min(4.0, Math.max(0.5, diff * 0.25))
+          const step = Math.min(3.0, Math.max(0.3, diff * 0.15))
           const next = prev + step
-          return next >= 99.5 ? 100 : next
+          return next >= 99.5 && target >= 100 ? 100 : Math.min(next, target)
         }
 
         return prev
@@ -43,14 +36,14 @@ const Loader = ({ modelReady, onFinished }) => {
 
     animationFrameId = requestAnimationFrame(updateProgress)
     return () => cancelAnimationFrame(animationFrameId)
-  }, [progress, active, loaded, total, modelProgress])
+  }, [modelProgress])
 
-  // Trigger onFinished when smoothedProgress reaches 100%
+  // Trigger onFinished ONLY when smoothedProgress reaches exactly 100%
   useEffect(() => {
     if (smoothedProgress >= 100) {
       const timer = setTimeout(() => {
         if (onFinished) onFinished()
-      }, 150)
+      }, 300)
       return () => clearTimeout(timer)
     }
   }, [smoothedProgress, onFinished])

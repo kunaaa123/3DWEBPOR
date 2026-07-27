@@ -29,7 +29,6 @@ function ShaderWarmup({ onComplete }) {
 function App() {
   const [hasClicked, setHasClicked] = useState(false)
   const [ready, setReady] = useState(false)
-  const [modelReady, setModelReady] = useState(false)
   const [focusedDoor, setFocusedDoor] = useState(null)
   const [selectedPaper, setSelectedPaper] = useState(null)
   const [cameraArrived, setCameraArrived] = useState(false)
@@ -58,7 +57,7 @@ function App() {
           <ScrollControls pages={6} damping={0}>
             <Experience
               onDoorClick={() => setHasClicked(true)}
-              onReady={() => setModelReady(true)}
+              onReady={() => {}}
               hasClicked={hasClicked}
               focusedDoor={focusedDoor}
               setFocusedDoor={setFocusedDoor}
@@ -71,7 +70,7 @@ function App() {
           </ScrollControls>
         </Canvas>
       </Suspense>
-      {!ready && <Loader modelReady={modelReady} onFinished={() => setReady(true)} />}
+      {!ready && <Loader onFinished={() => setReady(true)} />}
       {ready && (
         <Overlay
           hasClicked={hasClicked}
