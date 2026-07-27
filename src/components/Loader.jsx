@@ -6,26 +6,30 @@ const Loader = ({ onFinished }) => {
   const [smoothedProgress, setSmoothedProgress] = useState(0)
   const [loadingText, setLoadingText] = useState('กำลังเปิดอ่านบันทึก...')
 
-  // Smoothly increment progress number-by-number without jumping (Fast & Snappy)
+  // Smoothly increment progress number-by-number without jumping
   useEffect(() => {
     let animationFrameId
     const updateProgress = () => {
       setSmoothedProgress(prev => {
         if (prev >= 100) return 100
 
-        // Target progress from Drei or 100 if completed
-        let target = Math.min(100, Math.max(progress, prev))
-        if (!active && loaded > 0 && loaded >= total) {
+        // Target progress from Drei's loading manager (0 to 100)
+        let target = progress
+
+        // Only mark target as 100 when Drei explicitly hits 100 OR all assets (>= 5 items) are fully loaded
+        if (progress >= 100 || (!active && loaded >= 5 && loaded >= total)) {
           target = 100
+        } else if (!active && loaded < 5 && progress < 100) {
+          // At initial startup before full asset manifest is registered by Drei
+          target = Math.max(prev, progress)
         }
 
         if (prev < target) {
           const diff = target - prev
-          // Accelerated step speed (1.8 - 3.5% per frame) for super fast loading!
-          const maxStep = target >= 100 ? 3.5 : (diff > 40 ? 2.5 : 1.8)
-          const step = Math.min(maxStep, Math.max(0.8, diff * 0.2))
+          // Smooth steady increment matching real asset download speed (0.3 - 2.5% per frame)
+          const step = Math.min(2.5, Math.max(0.3, diff * 0.15))
           const next = prev + step
-          return next >= 99.4 ? 100 : next
+          return next >= 99.5 ? (target >= 100 ? 100 : 99) : next
         }
 
         return prev
@@ -37,12 +41,12 @@ const Loader = ({ onFinished }) => {
     return () => cancelAnimationFrame(animationFrameId)
   }, [progress, active, loaded, total])
 
-  // Trigger onFinished instantly when smoothedProgress reaches 100% (100ms quick transition)
+  // Trigger onFinished when smoothedProgress reaches 100%
   useEffect(() => {
     if (smoothedProgress >= 100) {
       const timer = setTimeout(() => {
         if (onFinished) onFinished()
-      }, 100)
+      }, 200)
       return () => clearTimeout(timer)
     }
   }, [smoothedProgress, onFinished])

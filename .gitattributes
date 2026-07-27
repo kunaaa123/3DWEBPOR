@@ -1,3 +1,0 @@
-public/models/corridor.glb filter=lfs diff=lfs merge=lfs -text
-public/models/mamm.blend filter=lfs diff=lfs merge=lfs -text
-public/models/mamm.blend1 filter=lfs diff=lfs merge=lfs -text
