@@ -5,7 +5,7 @@ import Experience from './components/Experience'
 import Loader from './components/Loader'
 import Overlay from './components/Overlay'
 
-function ShaderWarmup({ onComplete }) {
+function ShaderWarmup() {
   const { gl, scene, camera } = useThree()
   useEffect(() => {
     scene.traverse((child) => {
@@ -20,9 +20,7 @@ function ShaderWarmup({ onComplete }) {
       }
     })
     gl.compile(scene, camera)
-    window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 100 }))
-    if (onComplete) onComplete()
-  }, [gl, scene, camera, onComplete])
+  }, [gl, scene, camera])
   return null
 }
 

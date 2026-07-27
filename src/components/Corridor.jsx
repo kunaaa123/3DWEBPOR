@@ -1,6 +1,6 @@
 import { useGLTF, useAnimations, Html, useTexture } from '@react-three/drei'
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 // Match entrance door — GLTFLoader may output "Object_13001" or "Object_13.001"
@@ -612,10 +612,27 @@ const CorridorInner = ({ modelUrl, onEntranceFound, onDoorClick, onCharacterFoun
   const elasticsearchTexture = useTexture('/models/elasticsearch.jpg')
   const sendgridTexture = useTexture('/models/sendgrid_webhook.jpg')
   const portfolio3DTexture = useTexture('/models/portfolio_3d.png')
+  const { gl, camera } = useThree()
 
+  // Signal 92% when model + textures are loaded, then compile GPU shaders and signal 100%
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 92 }))
-  }, [])
+    
+    // Compile GPU shaders for the actual loaded model
+    scene.traverse((child) => {
+      if (child.isMesh && child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => { if (m.map) gl.initTexture(m.map) })
+        } else {
+          if (child.material.map) gl.initTexture(child.material.map)
+        }
+      }
+    })
+    gl.compile(scene, camera)
+
+    // Now the model is 100% GPU-ready
+    window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 100 }))
+  }, [scene, gl, camera])
   useMemo(() => {
     screenTexture.flipY = false
     screenTexture.colorSpace = THREE.SRGBColorSpace
