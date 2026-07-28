@@ -442,6 +442,24 @@ const Experience = ({ onDoorClick, onReady, hasClicked, focusedDoor, setFocusedD
     cameraZRef.current = cameraRef.current.position.z
   })
 
+  const { size } = useThree()
+
+  // Dynamically update FOV for mobile screen aspect ratios so the 3D scene never gets clipped on mobile phones
+  useEffect(() => {
+    if (!cameraRef.current) return
+    const aspect = size.width / size.height
+    if (aspect < 1.0) {
+      // Portrait aspect ratio (mobile screens): widen FOV dynamically so corridor & doors fit perfectly
+      const baseFov = 45
+      const radFov = (baseFov * Math.PI) / 180
+      const hFov = 2 * Math.atan(Math.tan(radFov / 2) * (1.2 / aspect))
+      cameraRef.current.fov = Math.min(75, (hFov * 180) / Math.PI)
+    } else {
+      cameraRef.current.fov = 45
+    }
+    cameraRef.current.updateProjectionMatrix()
+  }, [size.width, size.height])
+
   return (
     <>
       <PerspectiveCamera

@@ -1674,4 +1674,117 @@ canvas {
   color: var(--foreground);
 }
 
+/* ==========================================================================
+   Comprehensive Device Responsiveness (Mobile, Tablet, Desktop)
+   ========================================================================== */
+
+/* Tablets & Small Laptops (max-width: 900px) */
+@media (max-width: 900px) {
+  .profile-two-columns {
+    flex-direction: column !important;
+    gap: 24px !important;
+  }
+
+  .profile-left-col {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(112, 92, 72, 0.2) !important;
+    padding-right: 0 !important;
+    padding-bottom: 20px !important;
+  }
+
+  .project-modal {
+    width: 92vw !important;
+    max-width: 680px !important;
+    padding: 24px 20px !important;
+  }
+
+  .cv-document-modal {
+    width: 95vw !important;
+    padding: 16px !important;
+  }
+
+  .cv-pdf-container {
+    height: 50vh !important;
+    min-height: 280px !important;
+  }
+}
+
+/* Mobile Phones (max-width: 640px) */
+@media (max-width: 640px) {
+  .banner {
+    padding: 12px 20px !important;
+    width: 90vw !important;
+    max-width: 360px !important;
+  }
+
+  .banner-title {
+    font-size: 9.5px !important;
+    letter-spacing: 0.25em !important;
+  }
+
+  .banner-text {
+    font-size: 14.5px !important;
+  }
+
+  .exit-room-overlay {
+    top: 16px !important;
+    left: 16px !important;
+  }
+
+  .exit-room-btn {
+    padding: 8px 14px !important;
+    font-size: 12px !important;
+  }
+
+  .top-right-actions {
+    top: 16px !important;
+    right: 16px !important;
+  }
+
+  .action-circle-btn {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 18px !important;
+  }
+
+  .project-modal {
+    width: 94vw !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+  }
+
+  .project-title {
+    font-size: 19px !important;
+  }
+
+  .tech-logo-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .contact-card {
+    width: 92vw !important;
+    max-width: 340px !important;
+    padding: 20px 16px !important;
+  }
+
+  .contact-label {
+    font-size: 12px !important;
+    word-break: break-all !important;
+  }
+}
+
+/* Ultra Small Mobiles (max-width: 380px) */
+@media (max-width: 380px) {
+  .banner-text {
+    font-size: 13px !important;
+  }
+
+  .project-modal {
+    padding: 16px 12px !important;
+  }
+}
+
 
