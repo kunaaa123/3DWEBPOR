@@ -544,9 +544,9 @@ const SCROLL_ANIM_SPEED = 8
 
 let corridorBlobPromise = null
 
-const TOTAL_MODEL_BYTES = 10967736
-const CACHE_NAME = 'corridor-model-v10mb'
-const MODEL_URL = '/models/corridor.glb?v=10mb'
+const TOTAL_MODEL_BYTES = 22068584
+const CACHE_NAME = 'corridor-model-v22mb'
+const MODEL_URL = '/models/corridor.glb?v=22mb'
 
 const fetchSingleModelWithProgress = async (url) => {
   // Try browser cache first for instant repeat visits (0.1s)
@@ -554,7 +554,7 @@ const fetchSingleModelWithProgress = async (url) => {
     const cache = await caches.open(CACHE_NAME)
     const cached = await cache.match(url)
     if (cached) {
-      console.log('⚡ [Cache] Loaded 10.4MB 3D model instantly from Browser Cache!')
+      console.log('⚡ [Cache] Loaded 22MB 3D model instantly from Browser Cache!')
       const buffer = await cached.arrayBuffer()
       window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 85 }))
       return buffer
@@ -562,7 +562,7 @@ const fetchSingleModelWithProgress = async (url) => {
   } catch (e) { /* ignore */ }
 
   const startTime = performance.now()
-  console.log('⏱️ [Network] Downloading 10.4MB 3D model...')
+  console.log('⏱️ [Network] Downloading 22MB 3D model...')
 
   const response = await fetch(url)
   if (!response.ok) throw new Error(`Failed to load ${url}`)
@@ -582,7 +582,7 @@ const fetchSingleModelWithProgress = async (url) => {
   }
 
   const durationSec = ((performance.now() - startTime) / 1000).toFixed(2)
-  console.log(`⚡ [Network] 10.4MB Model downloaded in ${durationSec} seconds!`)
+  console.log(`⚡ [Network] 22MB Model downloaded in ${durationSec} seconds!`)
 
   const result = new Uint8Array(received)
   let pos = 0
