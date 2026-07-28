@@ -544,26 +544,27 @@ const SCROLL_ANIM_SPEED = 8
 
 let corridorBlobPromise = null
 
-const TOTAL_MODEL_BYTES = 91711632
-const SPEED_TEST_ID = Date.now()
-const CACHE_NAME = 'corridor-model-speedtest-' + SPEED_TEST_ID
-const MODEL_URL = '/models/corridor.glb?speedTest=' + SPEED_TEST_ID
+const TOTAL_MODEL_BYTES = 10967736
+const CACHE_NAME = 'corridor-model-v10mb'
+const MODEL_URL = '/models/corridor.glb?v=10mb'
 
 const fetchSingleModelWithProgress = async (url) => {
-  // Clear any existing model caches first to ensure 100% fresh network download
+  // Try browser cache first for instant repeat visits (0.1s)
   try {
-    const keys = await caches.keys()
-    for (const key of keys) {
-      if (key.includes('corridor-model')) {
-        await caches.delete(key)
-      }
+    const cache = await caches.open(CACHE_NAME)
+    const cached = await cache.match(url)
+    if (cached) {
+      console.log('⚡ [Cache] Loaded 10.4MB 3D model instantly from Browser Cache!')
+      const buffer = await cached.arrayBuffer()
+      window.dispatchEvent(new CustomEvent('model-download-progress', { detail: 85 }))
+      return buffer
     }
   } catch (e) { /* ignore */ }
 
   const startTime = performance.now()
-  console.log('⏱️ [Speed Test] Download started for 87.4MB model...')
+  console.log('⏱️ [Network] Downloading 10.4MB 3D model...')
 
-  const response = await fetch(url, { cache: 'no-store' })
+  const response = await fetch(url)
   if (!response.ok) throw new Error(`Failed to load ${url}`)
   const contentLength = response.headers.get('content-length')
   const total = contentLength ? parseInt(contentLength, 10) : TOTAL_MODEL_BYTES
@@ -581,7 +582,7 @@ const fetchSingleModelWithProgress = async (url) => {
   }
 
   const durationSec = ((performance.now() - startTime) / 1000).toFixed(2)
-  console.log(`⏱️ [Speed Test] Model download completed in ${durationSec} seconds!`)
+  console.log(`⚡ [Network] 10.4MB Model downloaded in ${durationSec} seconds!`)
 
   const result = new Uint8Array(received)
   let pos = 0
@@ -589,6 +590,14 @@ const fetchSingleModelWithProgress = async (url) => {
     result.set(chunk, pos)
     pos += chunk.length
   }
+
+  // Cache in browser for instant next visit
+  try {
+    const cache = await caches.open(CACHE_NAME)
+    await cache.put(url, new Response(new Blob([result.buffer]), {
+      headers: { 'Content-Type': 'model/gltf-binary' }
+    }))
+  } catch (e) { /* ignore */ }
 
   return result.buffer
 }
